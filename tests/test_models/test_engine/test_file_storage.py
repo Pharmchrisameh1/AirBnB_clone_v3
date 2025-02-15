@@ -18,13 +18,22 @@ import json
 import os
 import pep8
 import unittest
+
 FileStorage = file_storage.FileStorage
-classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
-           "Place": Place, "Review": Review, "State": State, "User": User}
+classes = {
+    "Amenity": Amenity,
+    "BaseModel": BaseModel,
+    "City": City,
+    "Place": Place,
+    "Review": Review,
+    "State": State,
+    "User": User,
+}
 
 
 class TestFileStorageDocs(unittest.TestCase):
     """Tests to check the documentation and style of FileStorage class"""
+
     @classmethod
     def setUpClass(cls):
         """Set up for the doc tests"""
@@ -33,44 +42,61 @@ class TestFileStorageDocs(unittest.TestCase):
     def test_pep8_conformance_file_storage(self):
         """Test that models/engine/file_storage.py conforms to PEP8."""
         pep8s = pep8.StyleGuide(quiet=True)
-        result = pep8s.check_files(['models/engine/file_storage.py'])
-        self.assertEqual(result.total_errors, 0,
-                         "Found code style errors (and warnings).")
+        result = pep8s.check_files(["models/engine/file_storage.py"])
+        self.assertEqual(
+            result.total_errors, 0, "Found code style errors (and warnings)."
+        )
 
     def test_pep8_conformance_test_file_storage(self):
         """Test tests/test_models/test_file_storage.py conforms to PEP8."""
         pep8s = pep8.StyleGuide(quiet=True)
-        result = pep8s.check_files(['tests/test_models/test_engine/\
-test_file_storage.py'])
-        self.assertEqual(result.total_errors, 0,
-                         "Found code style errors (and warnings).")
+        result = pep8s.check_files(
+            [
+                "tests/test_models/test_engine/\
+test_file_storage.py"
+            ]
+        )
+        self.assertEqual(
+            result.total_errors, 0, "Found code style errors (and warnings)."
+        )
 
     def test_file_storage_module_docstring(self):
         """Test for the file_storage.py module docstring"""
-        self.assertIsNot(file_storage.__doc__, None,
-                         "file_storage.py needs a docstring")
-        self.assertTrue(len(file_storage.__doc__) >= 1,
-                        "file_storage.py needs a docstring")
+        self.assertIsNot(
+            file_storage.__doc__, None, "file_storage.py needs a docstring"
+        )
+        self.assertTrue(
+            len(file_storage.__doc__) >= 1, "file_storage.py needs a docstring"
+        )
 
     def test_file_storage_class_docstring(self):
         """Test for the FileStorage class docstring"""
-        self.assertIsNot(FileStorage.__doc__, None,
-                         "FileStorage class needs a docstring")
-        self.assertTrue(len(FileStorage.__doc__) >= 1,
-                        "FileStorage class needs a docstring")
+        self.assertIsNot(
+            FileStorage.__doc__, None, "FileStorage class needs a docstring"
+        )
+        self.assertTrue(
+            len(FileStorage.__doc__) >= 1,
+            "FileStorage class needs a docstring",
+        )
 
     def test_fs_func_docstrings(self):
         """Test for the presence of docstrings in FileStorage methods"""
         for func in self.fs_f:
-            self.assertIsNot(func[1].__doc__, None,
-                             "{:s} method needs a docstring".format(func[0]))
-            self.assertTrue(len(func[1].__doc__) >= 1,
-                            "{:s} method needs a docstring".format(func[0]))
+            self.assertIsNot(
+                func[1].__doc__,
+                None,
+                "{:s} method needs a docstring".format(func[0]),
+            )
+            self.assertTrue(
+                len(func[1].__doc__) >= 1,
+                "{:s} method needs a docstring".format(func[0]),
+            )
 
 
 class TestFileStorage(unittest.TestCase):
     """Test the FileStorage class"""
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+
+    @unittest.skipIf(models.storage_t == "db", "not testing file storage")
     def test_all_returns_dict(self):
         """Test that all returns the FileStorage.__objects attr"""
         storage = FileStorage()
@@ -78,7 +104,7 @@ class TestFileStorage(unittest.TestCase):
         self.assertEqual(type(new_dict), dict)
         self.assertIs(new_dict, storage._FileStorage__objects)
 
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+    @unittest.skipIf(models.storage_t == "db", "not testing file storage")
     def test_new(self):
         """test that new adds an object to the FileStorage.__objects attr"""
         storage = FileStorage()
@@ -94,7 +120,7 @@ class TestFileStorage(unittest.TestCase):
                 self.assertEqual(test_dict, storage._FileStorage__objects)
         FileStorage._FileStorage__objects = save
 
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+    @unittest.skipIf(models.storage_t == "db", "not testing file storage")
     def test_save(self):
         """Test that save properly saves objects to file.json"""
         storage = FileStorage()
@@ -115,49 +141,30 @@ class TestFileStorage(unittest.TestCase):
         self.assertEqual(json.loads(string), json.loads(js))
 
 
-class TestGetCountFileStorage(unittest.TestCase):
-    """Test the FileStorage class"""
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+class TestFileStorage(unittest.TestCase):
+    """Test the new methods."""
+
+    @unittest.skipIf(models.storage_t != "db", "not testing file storage")
     def test_get(self):
-        """Test that get returns the object based on the class and its ID"""
-        storage = FileStorage()
-        for key, value in classes.items():
-            instance = value()
-            instance_key = instance.__class__.__name__ + "." + instance.id
-            storage.new(instance)
-            retrieved_instance = storage.get(value, instance.id)
-            self.assertEqual(instance, retrieved_instance)
+        """Test the get method."""
+        newState = State(name="New York")
+        newState.save()
+        newUser = User(email="bob@foobar.com", password="password")
+        newUser.save()
+        self.assertIs(newState, models.storage.get(State, newState.id))
+        self.assertIs(None, models.storage.get(State, "blah"))
+        self.assertIs(None, models.storage.get("blah", "blah"))
+        self.assertIs(newUser, models.storage.get(User, newUser.id))
 
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
-    def test_get_none(self):
-        """Test that get returns None if the object is not found"""
-        storage = FileStorage()
-        for key, value in classes.items():
-            instance = value()
-            instance_key = instance.__class__.__name__ + "." + instance.id
-            storage.new(instance)
-            retrieved_instance = storage.get(value, "nonexistent_id")
-            self.assertIsNone(retrieved_instance)
-
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+    @unittest.skipIf(models.storage_t != "db", "not testing file storage")
     def test_count(self):
-        """Test that count returns the number of objects in storage"""
-        storage = FileStorage()
-        for key, value in classes.items():
-            instance = value()
-            instance_key = instance.__class__.__name__ + "." + instance.id
-            storage.new(instance)
-        count = storage.count()
-        self.assertEqual(count, len(storage.all()))
-
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
-    def test_count_by_class(self):
-        """Test that count returns the number of objects in storage by class"""
-        storage = FileStorage()
-        for key, value in classes.items():
-            instance = value()
-            instance_key = instance.__class__.__name__ + "." + instance.id
-            storage.new(instance)
-        for key, value in classes.items():
-            count = storage.count(value)
-            self.assertEqual(count, len(storage.all(value)))
+        """Test the count method."""
+        initialCountAll = models.storage.count()
+        initialCountState = models.storage.count(State)
+        self.assertEqual(models.storage.count("Blah"), 0)
+        newState = State(name="state_name")
+        newState.save()
+        newUser = User(email="test@mail.com", password="password")
+        newUser.save()
+        self.assertEqual(models.storage.count(State), initialCountState + 1)
+        self.assertEqual(models.storage.count(), initialCountAll + 2)
